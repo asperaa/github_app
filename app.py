@@ -6,7 +6,7 @@ import time
 import logging
 
 #Create and configure logger 
-logging.basicConfig(filename="newfile.log", 
+logging.basicConfig(filename="github_app_file.log", 
                     format='%(asctime)s %(message)s', 
                     filemode='w')
 
@@ -39,12 +39,24 @@ def github_repo_call(org_id):
     url = 'https://api.github.com/orgs/'+str(org_id)+'/repos'
     
     # making the API GET request using the url and headers
-    response = requests.get(url, headers=headers)
-    repositories = response.json()
-    # print(repositories)
-    LOGGER.debug("---------------- Dictionaries of all the repositories ---------------------------")
-    LOGGER.debug(repositories)
-    LOGGER.debug("---------------- End of repositories -------------------------------------")
+    params = {'per_page': 100}
+    response = requests.get(url, params, headers=headers)
+
+    if response.status_code != 200:
+        return {"results": "Some error occured. Please try again with correct org spelling"}
+    
+    num_pages = 1
+    LOGGER.debug(response.headers)
+    if 'Link' in response.headers:
+        last_header_part = response.headers['Link'][-15:]
+    
+        if last_header_part[0] == '=':
+            num_pages = int(last_header_part[1])
+        else:
+            num_pages = int(last_header_part[:2])
+        # print(num_pages)
+
+    
     # stores essential info like name and stars for all the repos
     final_list = []
     
@@ -53,7 +65,23 @@ def github_repo_call(org_id):
     
     # iterate through each repository and store name and star count
     # then sort on the basis of star count
-    for repo in repositories:
+    mega_list_repos = []
+    
+    for page in range(1, num_pages + 1):
+        params={'page': page}
+        LOGGER.debug("----Page number:--------")
+        LOGGER.debug(page)
+        page_response = requests.get(url, params, headers=headers)
+        for each_repo in page_response.json():
+            mega_list_repos.append(each_repo)
+    
+    
+    
+    LOGGER.debug("-------------------------Number of repos-------------------------")
+    LOGGER.debug(len(mega_list_repos))
+    LOGGER.debug("----------------------------------End of Number of repos-----------------------")
+    
+    for repo in mega_list_repos:
         repo_info = {}
         repo_info["name"] = repo["name"] if "name" in repo else None
         repo_info["stars"] = repo["stargazers_count"] if "stargazers_count" in repo else None
@@ -88,6 +116,10 @@ def github_repo_call(org_id):
         
     result = {"results": top_three_repos}
     
+    LOGGER.debug("-----------------Final Results of top 3 repos-----------------------")
+    LOGGER.debug(result)
+    LOGGER.debug("------------------End of Final top 3 repos---------------------")
+
     return result
 
 @app.route('/repos', methods=['POST'])

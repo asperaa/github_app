@@ -1,0 +1,17 @@
+1.
+The response time can be calculated by recording the timestamp before the API calculated
+and the time stamp after the response.
+
+The difference between the two is the response time.
+
+2.
+Here is the link where you can send the POST request to get the top 3 repositories of the organisation:
+
+http://github-application.herokuapp.com/repos
+
+Body of the request :
+{
+	"org": 450
+}
+
+and Content-Type='application/json'
