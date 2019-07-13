@@ -47,6 +47,7 @@ def github_repo_call(org_id):
     
     num_pages = 1
     LOGGER.debug(response.headers)
+
     if 'Link' in response.headers:
         last_header_part = response.headers['Link'][-15:]
     
